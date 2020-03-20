@@ -4,9 +4,11 @@ import "C"
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/robfig/cron"
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 	"unsafe"
 )
 
@@ -21,6 +23,14 @@ func InitSystem(sc, s *C.char, size1, size2 C.int) *C.char {
 	if response.Ret == "success" {
 		marshal, err := json.Marshal(response.Data)
 		if err == nil {
+
+			s := "0/10 * * * * ? "
+			i := cron.New()
+			addFunc := i.AddFunc(s, Statistics)
+			if addFunc == nil {
+				i.Start()
+			}
+
 			return C.CString(string(marshal))
 		}
 	}
@@ -28,15 +38,17 @@ func InitSystem(sc, s *C.char, size1, size2 C.int) *C.char {
 	return C.CString("")
 }
 
-func Put(monitorId *C.char, size C.int) {
+//export Put
+func Put(monitorId *C.char, size, count C.int) {
 	id := C.GoBytes(unsafe.Pointer(monitorId), size)
 	s := string(id)
 	if s != "" {
-		//todo
+		Add(s, int(count))
 	}
 }
 
 const initUrl = "http://127.0.0.1:9004/df/sys/systemMonitorList"
+const pushUrl = "http://127.0.0.1:9004/df/sys/systemMonitorPush"
 const contentType = "application/x-www-form-urlencoded"
 
 func post(sc, s string) []byte {
@@ -51,6 +63,29 @@ func post(sc, s string) []byte {
 
 }
 
+func get() {
+	resp, err := http.Get("http://127.0.0.1:9004/df/sys/systemMonitorPush")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer resp.Body.Close()
+}
+
+func postJson(s string) {
+	request, e := http.NewRequest("POST", pushUrl, strings.NewReader(s))
+	if e != nil {
+		fmt.Println(e)
+	} else {
+		request.Header.Add("content-type", "application/json")
+		client := &http.Client{Timeout: 60 * time.Second}
+		resp, e := client.Do(request)
+		if e == nil {
+			request.Body.Close()
+			resp.Body.Close()
+		}
+	}
+}
+
 type BizResponse struct {
 	Ret  string          `json:"ret"`
 	Data []SystemMonitor `json:"data"`
@@ -63,26 +98,5 @@ type SystemMonitor struct {
 }
 
 func main() {
-	/*s := post("ycf-home", "adcd7048512e64b48da55b027577886ee5a36350")
-	response := BizResponse{}
-	err := json.Unmarshal(s, &response)
-
-	if err == nil {
-		fmt.Println(response.Data[0].Path)
-
-	}*/
-
-	/*s := "ycf-home"
-	i := "adcd7048512e64b48da55b027577886ee5a36350"
-
-	bytes := []byte(s)
-	i2 := []byte(i)
-
-	systemCode := (*C.char)(unsafe.Pointer(&bytes))
-	secret := (*C.char)(unsafe.Pointer(&i2))
-
-	fmt.Println("123")
-	system := InitSystem(systemCode ,secret, C.int(len(bytes)), C.int(len(i2)))
-	fmt.Println(system)*/
 
 }
