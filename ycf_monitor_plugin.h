@@ -71,6 +71,8 @@ extern "C" {
 
 extern char* InitSystem(char* p0, char* p1, int p2, int p3);
 
+extern void PushUrl(char* p0, int p1);
+
 extern void Put(char* p0, int p1, int p2);
 
 #ifdef __cplusplus
