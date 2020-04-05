@@ -38,13 +38,11 @@ func InitSystem(sc, s *C.char, size1, size2 C.int) *C.char {
 					monitor := v
 					pattens[monitor.Id] = monitor.Path
 				}
-				//init cron
-				s := "0/10 * * * * ? "
+				//todo init cron
+				s := "0 57 * * * ? "
 				i := cron.New()
-				addFunc := i.AddFunc(s, Statistics)
-				if addFunc == nil {
-					i.Start()
-				}
+				i.AddFunc(s, Statistics)
+				i.Start()
 
 				return C.CString(string(marshal))
 			}
@@ -59,7 +57,7 @@ func PushUrl(str *C.char, size C.int) {
 	if isInit {
 		s := C.GoBytes(unsafe.Pointer(str), size)
 		url := string(s)
-		if url == "" {
+		if url != "" {
 			//if eq url
 			for k, v := range pattens {
 				matched, err := regexp.MatchString(v, url)
@@ -85,8 +83,8 @@ func Put(monitorId *C.char, size, count C.int) {
 	}
 }
 
-const initUrl = "http://127.0.0.1:9004/df/sys/systemMonitorList"
-const pushUrl = "http://127.0.0.1:9004/df/sys/systemMonitorPush"
+const initUrl = "http://inside.cloudfunx.com:9004/df/sys/systemMonitorList"
+const pushUrl = "http://inside.cloudfunx.com:9004/df/sys/systemMonitorPush"
 const contentType = "application/x-www-form-urlencoded"
 
 func post(sc, s string) []byte {
