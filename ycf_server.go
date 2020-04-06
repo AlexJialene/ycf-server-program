@@ -4,7 +4,6 @@ import "C"
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/robfig/cron"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -39,11 +38,7 @@ func InitSystem(sc, s *C.char, size1, size2 C.int) *C.char {
 					pattens[monitor.Id] = monitor.Path
 				}
 				//todo init cron
-				s := "0 57 * * * ? "
-				i := cron.New()
-				i.AddFunc(s, Statistics)
-				i.Start()
-
+				go newTimer()
 				return C.CString(string(marshal))
 			}
 		}
@@ -79,6 +74,18 @@ func Put(monitorId *C.char, size, count C.int) {
 		s := string(id)
 		if s != "" {
 			Add(s, int(count))
+		}
+	}
+}
+
+func newTimer() {
+	ticker := time.NewTicker(time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			if 58 == time.Now().Minute() {
+				Statistics()
+			}
 		}
 	}
 }

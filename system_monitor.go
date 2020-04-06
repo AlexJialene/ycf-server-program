@@ -39,6 +39,7 @@ func Add(id string, count int) {
 
 //statistics data
 func Statistics() {
+	fmt.Println("ticker run ")
 	m.Lock()
 	//slices
 	controls := make([]*MonitorControl, 0)
@@ -53,7 +54,7 @@ func Statistics() {
 
 	if len(controls) > 0 {
 		fmt.Println("synchronization monitor data")
-		monitor := Monitor{time.Now().Unix(), controls}
+		monitor := Monitor{time.Now().UnixNano() / 1e6, controls}
 		bytes, e := json.Marshal(monitor)
 		if e == nil {
 			postJson(string(bytes))
